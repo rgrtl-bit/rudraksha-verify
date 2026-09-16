@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Certificate Verification — Rudra Gems & Rudraksha Testing Lab</title>
+<style>
+:root{font-family:Arial,Helvetica,sans-serif;color:#18213a;background:#f5f7fb}
+*{box-sizing:border-box} body{margin:0;padding:24px}.wrap{max-width:720px;margin:30px auto}.brand{font-size:20px;font-weight:800;margin-bottom:16px}.panel{background:#fff;border-radius:18px;padding:28px;box-shadow:0 8px 30px rgba(0,0,0,.08)}
+.status{padding:16px;border-radius:12px;font-size:25px;font-weight:800}.valid{background:#eaf4ea;color:#137333}.invalid{background:#fcebea;color:#b3261e}.warn{background:#fff7e6;color:#8a5300}
+.msg{margin:18px 0;font-size:16px;line-height:1.5}.card{border-top:1px solid #e5e7eb;margin-top:20px;padding-top:10px}.row{display:flex;justify-content:space-between;gap:20px;border-bottom:1px solid #eef0f4;padding:12px 0}.row b{color:#667085}.footer{margin-top:18px;color:#667085;font-size:12px}.spinner{display:inline-block;width:15px;height:15px;border:2px solid #ddd;border-top-color:#666;border-radius:50%;animation:spin .8s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}
+@media(max-width:560px){body{padding:14px}.panel{padding:20px}.row{flex-direction:column;gap:4px}.status{font-size:21px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="brand">Rudra Gems &amp; Rudraksha Testing Lab</div>
+  <div class="panel" id="app"><div class="status warn"><span class="spinner"></span> Checking certificate…</div></div>
+</div>
+<script>
+const PUBLIC_KEY={kty:'EC',crv:'P-256',x:'eWjdFOHm8DqG0yfn4xlisWxg4X8mSstybKR5odFRQBE',y:'4buDFqYSsT0bPZR7WfbUcgug1YsMb70vuJ9KyIRWlcg',ext:true};
+function b64uToBytes(s){s=s.replace(/-/g,'+').replace(/_/g,'/');while(s.length%4)s+='=';const bin=atob(s),out=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)out[i]=bin.charCodeAt(i);return out}
+async function verifySignature(message,sig){const key=await crypto.subtle.importKey('jwk',PUBLIC_KEY,{name:'ECDSA',namedCurve:'P-256'},false,['verify']);const raw=b64uToBytes(sig);if(raw.length!==64)return false;return crypto.subtle.verify({name:'ECDSA',hash:'SHA-256'},key,raw,new TextEncoder().encode(message))}
+function esc(s){return String(s??'').replace(/[&<>\"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;'}[c]));}
+function renderInvalid(title,msg){document.getElementById('app').innerHTML=`<div class="status invalid">${esc(title)}</div><div class="msg">${esc(msg)}</div><div class="footer">Certificate verification by Rudra Gems &amp; Rudraksha Testing Lab</div>`}
+function renderValid(d){document.getElementById('app').innerHTML=`<div class="status valid">✅ VALID CERTIFICATE</div><div class="msg">This certificate has a valid digital signature. The information below is the data signed by the laboratory certificate software.</div><div class="card"><div class="row"><b>Certificate No.</b><span>${esc(d.cert)}</span></div><div class="row"><b>Lot No.</b><span>${esc(d.lot)}</span></div><div class="row"><b>Issued To</b><span>${esc(d.issued)}</span></div><div class="row"><b>Mukh / Faces</b><span>${esc(d.mukh)}</span></div><div class="row"><b>Type</b><span>${esc(d.type)}</span></div></div><div class="footer">Secure public verification. No Google account is required.</div>`}
+async function main(){const q=new URLSearchParams(location.search);const cert=q.get('cert')||'',lot=q.get('lot')||'',issued=q.get('issued')||'',mukh=q.get('mukh')||'',type=q.get('type')||'',sig=q.get('sig')||'';if(!cert||!sig){renderInvalid('INVALID QR','This QR code does not contain complete certificate information.');return}try{const ok=await verifySignature([cert,lot,issued,mukh,type].join('|'),sig);if(!ok){renderInvalid('INVALID / MODIFIED CERTIFICATE','The digital signature does not match this certificate information.');return}renderValid({cert,lot,issued,mukh,type})}catch(e){console.error(e);renderInvalid('VERIFICATION UNAVAILABLE','Your browser could not perform the certificate signature check. Please try another modern browser.')}}main();
+</script>
+</body></html>
